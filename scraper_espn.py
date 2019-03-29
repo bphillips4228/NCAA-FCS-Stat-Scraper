@@ -7,15 +7,17 @@ import csv
 
 
 team_ids = {}
+game_num = 0
 season = 2015
+week = 1
 season_range = [2015, 2016, 2017, 2018]
 week_range = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 'Bowls']
 games_stats = []
 
-stat_categories = ['Season', 'WId', 'WScore', 'LId', 'LScore', 'WLoc', 'WFirst_Downs', 'WThird_Downs', 'WFourth_Downs', 'WTotal_Yards', 'WPassing',
-'WComp_Perc', 'WYards_Per_Pass', 'WInterceptions_Thrown', 'WRushing', 'WRushing_Attempts', 'WYards_Per_Rush', 'WPenalities', 'WPenality_Yards',
+stat_categories = ['Season', 'Week', 'WId', 'WScore', 'LId', 'LScore', 'WLoc', 'WFirst_Downs', 'WThird_Downs', 'WFourth_Downs', 'WTotal_Yards', 'WPassing',
+'WComp_Perc', 'WYards_Per_Pass', 'WInterceptions_Thrown', 'WRushing', 'WRushing_Attempts', 'WYards_Per_Rush', 'WPenalties', 'WPenalty_Yards',
 'WTurnovers', 'WFumbles_Lost', 'WInterceptions_Thrown', 'WPossession','LFirst_Downs', 'LThird_Downs', 'LFourth_Downs', 'LTotal_Yards', 'LPassing',
-'LComp_Perc', 'LYards_Per_Pass', 'LInterceptions_Thrown', 'LRushing', 'LRushing_Attempts', 'LYards_Per_Rush', 'LPenalities', 'LPenality_Yards',
+'LComp_Perc', 'LYards_Per_Pass', 'LInterceptions_Thrown', 'LRushing', 'LRushing_Attempts', 'LYards_Per_Rush', 'LPenalties', 'LPenalty_Yards',
 'LTurnovers', 'LFumbles_Lost', 'LInterceptions_Thrown', 'LPossession']
 
 def find_percentage(data):
@@ -120,13 +122,14 @@ def set_game_stats(game):
 	game_html = game_browser.page_source
 	game_soup = BeautifulSoup(game_html, 'html.parser')
 
-	print(f'Getting stats from {team_1_name} vs. {team_2_name} game...')
+	print(f'Getting stats from Game {game_num}: {team_1_name} vs. {team_2_name} game({season}: Week {week})...')
 
 	try:
-		game_data = ((game_soup.find('table', {'class': 'mod-data'})).find('tbody')).findAll('tr')
+		game_data = (game_soup.find('table').find('tbody')).findAll('tr')
 
 		if int(team_2_score) > int(team_1_score):
 			game_stats.append(season)
+			game_stats.append(week)
 			game_stats.append(team_2_id)
 			game_stats.append(team_2_score)
 			game_stats.append(team_1_id)
@@ -137,6 +140,7 @@ def set_game_stats(game):
 
 		else:
 			game_stats.append(season)
+			game_stats.append(week)
 			game_stats.append(team_1_id)
 			game_stats.append(team_1_score)
 			game_stats.append(team_2_id)
@@ -147,24 +151,24 @@ def set_game_stats(game):
 
 		game_browser.quit()
 
-		game_stats[7] = find_percentage(game_stats[7])
 		game_stats[8] = find_percentage(game_stats[8])
-		game_stats[11] = find_percentage(game_stats[11])
-		game_stats.insert(18, split_second(game_stats[17]))
-		game_stats[17] = split_first(game_stats[17])
+		game_stats[9] = find_percentage(game_stats[9])
+		game_stats[12] = find_percentage(game_stats[12])
+		game_stats.insert(19, split_second(game_stats[18]))
+		game_stats[18] = split_first(game_stats[18])
 		try:
-			game_stats[22] = convert_time(game_stats[22])
+			game_stats[23] = convert_time(game_stats[23])
 		except:
-			game_stats[22] = 0
-		game_stats[24] = find_percentage(game_stats[24])
+			game_stats[23] = 0
 		game_stats[25] = find_percentage(game_stats[25])
-		game_stats[28] = find_percentage(game_stats[28])
-		game_stats.insert(35, split_second(game_stats[34]))
-		game_stats[34] = split_first(game_stats[34])
+		game_stats[26] = find_percentage(game_stats[26])
+		game_stats[29] = find_percentage(game_stats[29])
+		game_stats.insert(36, split_second(game_stats[35]))
+		game_stats[35] = split_first(game_stats[35])
 		try:
-			game_stats[39] = convert_time(game_stats[39])
+			game_stats[40] = convert_time(game_stats[40])
 		except:
-			game_stats[39] = 0
+			game_stats[40] = 0
 
 		return game_stats
 
@@ -173,12 +177,15 @@ def set_game_stats(game):
 
 options = Options()
 options.add_argument('--headless')
-options.add_argument('log-level=3');
+options.add_argument('log-level=3')
+prefs={"profile.managed_default_content_settings.images": 2, 'disk-cache-size': 4096 }
+options.add_experimental_option("prefs", prefs)
 
 for season in season_range:
 	season = season
 	print('Season: ' + str(season))
 	for week in week_range:
+		week = week
 		print('Week: ' + str(week))
 		if week == 'Bowl':
 			page_url = f'http://www.espn.com/college-football/scoreboard/_/group/81/year/{season}/seasontype/3/week/1'
@@ -194,14 +201,14 @@ for season in season_range:
 		games = soup.findAll('article', {'class': 'scoreboard'})
 
 		for game in games:
-
+			game_num = game_num + 1
 			game_data = set_game_stats(game)
 			if game_data != None:
 				games_stats.append(game_data)
 
 			browser.quit()
 
-with open('fcs_data_2015_2018.csv', 'w', newline='') as f:
+with open('fcs_data_2015_2018_1.csv', 'w', newline='') as f:
 	writer = csv.writer(f)
 	writer.writerow(stat_categories)
 	writer.writerows(games_stats)
